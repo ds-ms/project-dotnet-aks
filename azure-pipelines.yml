@@ -50,6 +50,7 @@ stages:
               cd $(Agent.TempDirectory)
               helm create app-deploy-chart
               cat $(Agent.TempDirectory)/app-deploy-chart/templates/ingress.yaml
+              cat $(Agent.TempDirectory)/app-deploy-chart/templates/values.yaml
           
           - task: AzureCLI@2
             displayName: get host suffix
