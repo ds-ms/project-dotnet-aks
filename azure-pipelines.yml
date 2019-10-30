@@ -90,7 +90,7 @@ stages:
                 service.port:80
                 ingress.enabled:true
                 ingress.annotations.kuberentes\.io/ingress\.class:addon-http-application-routing
-                ingress.hosts[0].path:/
+                ingress.hosts[0].paths[0]:/
                 ingress.hosts[0].host:app-deploy.$(HostSuffix)
 
           - script: cat $(bake.manifestsBundle)
