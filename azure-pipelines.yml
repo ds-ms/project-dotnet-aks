@@ -66,14 +66,56 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              
+          
+          - script: |
+              cd $(Agent.TempDirectory)
+              helm create app-deploy-chart
+          
+          - task: AzureCLI@1
+            displayName: get host suffix
+            inputs:
+              azureSubscription: RMDev
+              inlineScript: |
+                 $out=$(az aks list --query "[?name == 'desattir'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
+                 if ($out.Length -eq 0) { 
+                    Write-Host "Ensure your AKS cluster still exists";
+                    exit 1;
+                 }
+                 if ($out.Length -ge 1) { 
+                    Write-Host "There's a conflict, add --resource-group flag to the list command";
+                    exit 1
+                 }
+                 if ($out[0][0]) {
+                    $hostSuffix=$out[0][0]
+                    Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
+                 }
+                 else {
+                    Write-Host "Enable addon http routing"
+                    exit 1;
+                 }
+            
+
+          - task: KubernetesManifest@0
+            displayName: Bake manifests
+            name: bake
+            inputs:
+              helmChart: $(Agent.TempDirectory)/app-deploy-chart
+              overrideFiles: $(Agent.TempDirectory)/app-deploy-chart/values.yaml
+              overrides: |
+                image.repository:$(containerRegistry)/$(imageRepository)
+                service.port:80
+                ingress.enabled:true
+                ingress.annotations.kuberentes.io/ingress.class:addon-http-application-routing
+                ingress.path:/
+                ingress.hostname:app-deploy.$(HostSuffix)
+                
+          - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
               manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
+                $(bake.manifestsBundle)
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
