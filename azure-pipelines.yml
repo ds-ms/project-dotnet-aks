@@ -15,7 +15,7 @@ variables:
   imageRepository: 'dsmsprojectdotnetaks'
   containerRegistry: 'desattiracr.azurecr.io'
   dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildId)'
+  tag: '2900'
   imagePullSecret: 'desattiracr12104330-auth'
 
   # Agent VM image name
@@ -24,30 +24,9 @@ variables:
   k8sNamespaceForPR: '$(system.pullRequest.sourceBranch)'
 
 stages:
-- stage: Build
-  displayName: Build stage
-  jobs:  
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-          
-    - upload: manifests
-      artifact: manifests
 
 - stage: Deploy
   displayName: Deploy stage
-  dependsOn: Build
 
   jobs:
   - deployment: Deploy
@@ -108,7 +87,7 @@ stages:
                 ingress.annotations.kuberentes.io/ingress.class:addon-http-application-routing
                 ingress.path:/
                 ingress.hostname:app-deploy.$(HostSuffix)
-                
+
           - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
