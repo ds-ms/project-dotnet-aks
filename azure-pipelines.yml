@@ -77,7 +77,7 @@ stages:
             name: bake
             inputs:
               action: bake
-              helmChart: charts/samplechart/
+              helmChart: charts/samplechart
               overrideFiles: charts/samplechart/values.yaml
               overrides: |
                 image.repository:$(containerRegistry)/$(imageRepository)
