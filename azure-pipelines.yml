@@ -84,8 +84,8 @@ stages:
             name: bake
             inputs:
               action: bake
-              helmChart: $(Pipeline.Workspace)charts/samplechart
-              overrideFiles: charts/samplechart/values.yaml
+              helmChart: $(Pipeline.Workspace)/charts/samplechart
+              overrideFiles: $(Pipeline.Workspace)/charts/samplechart/values.yaml
               overrides: |
                 image.repository:$(containerRegistry)/$(imageRepository)
                 service.port:80
