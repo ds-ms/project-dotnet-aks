@@ -54,6 +54,7 @@ stages:
             displayName: get host suffix
             inputs:
               scriptType: ps
+              scriptLocation: inlineScript
               azureSubscription: RMDev
               inlineScript: |
                  $out=$(az aks list --query "[?name == 'desattir'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
