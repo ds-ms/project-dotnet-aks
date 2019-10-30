@@ -50,9 +50,10 @@ stages:
               cd $(Agent.TempDirectory)
               helm create app-deploy-chart
           
-          - task: AzureCLI@1
+          - task: AzureCLI@2
             displayName: get host suffix
             inputs:
+              scriptType: ps
               azureSubscription: RMDev
               inlineScript: |
                  $out=$(az aks list --query "[?name == 'desattir'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
