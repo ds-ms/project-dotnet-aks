@@ -46,12 +46,6 @@ stages:
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
           
-          - script: |
-              cd $(Agent.TempDirectory)
-              helm create app-deploy-chart
-              cat $(Agent.TempDirectory)/app-deploy-chart/templates/ingress.yaml
-              cat $(Agent.TempDirectory)/app-deploy-chart/values.yaml
-          
           - task: AzureCLI@2
             displayName: get host suffix
             inputs:
@@ -66,14 +60,14 @@ stages:
                  }
                  if ($out.Length -gt 1) { 
                     Write-Host "There's a conflict, add --resource-group flag to the list command";
-                    exit 1
+                    exit 1;
                  }
                  if ($out[0][0]) {
                     $hostSuffix=$out[0][0]
                     Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
                  }
                  else {
-                    Write-Host "Enable addon http routing"
+                    Write-Host "Enable addon http routing";
                     exit 1;
                  }
             
@@ -83,14 +77,14 @@ stages:
             name: bake
             inputs:
               action: bake
-              helmChart: $(Agent.TempDirectory)/app-deploy-chart
-              overrideFiles: $(Agent.TempDirectory)/app-deploy-chart/values.yaml
+              helmChart: charts/samplechart/
+              overrideFiles: charts/samplechart/values.yaml
               overrides: |
                 image.repository:$(containerRegistry)/$(imageRepository)
                 service.port:80
                 ingress.enabled:true
                 ingress.annotations.kuberentes\.io/ingress\.class:addon-http-application-routing
-                ingress.hosts[0].paths[0]:/
+                ingress.paths[0]:/
                 ingress.hosts[0].host:app-deploy.$(HostSuffix)
 
           - script: cat $(bake.manifestsBundle)
