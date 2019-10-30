@@ -80,6 +80,7 @@ stages:
             displayName: Bake manifests
             name: bake
             inputs:
+              action: bake
               helmChart: $(Agent.TempDirectory)/app-deploy-chart
               overrideFiles: $(Agent.TempDirectory)/app-deploy-chart/values.yaml
               overrides: |
