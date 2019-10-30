@@ -24,6 +24,13 @@ variables:
   k8sNamespaceForPR: '$(system.pullRequest.sourceBranch)'
 
 stages:
+- stage: Deploy
+  displayName: Deploy stage
+  jobs:
+    job:
+      steps:
+        - upload: charts
+          artifact: charts
 
 - stage: Deploy
   displayName: Deploy stage
@@ -77,7 +84,7 @@ stages:
             name: bake
             inputs:
               action: bake
-              helmChart: charts/samplechart
+              helmChart: $(Pipeline.Workspace)charts/samplechart
               overrideFiles: charts/samplechart/values.yaml
               overrides: |
                 image.repository:$(containerRegistry)/$(imageRepository)
