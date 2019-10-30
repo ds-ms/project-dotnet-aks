@@ -24,17 +24,17 @@ variables:
   k8sNamespaceForPR: '$(system.pullRequest.sourceBranch)'
 
 stages:
-- stage: Deploy
+- stage: Build
   displayName: Deploy stage
   jobs:
-    job:
-      steps:
-        - upload: charts
-          artifact: charts
+  - job:
+    steps:
+      - upload: charts
+        artifact: charts
 
 - stage: Deploy
   displayName: Deploy stage
-
+  dependsOn: Build
   jobs:
   - deployment: Deploy
     condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
