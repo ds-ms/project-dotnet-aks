@@ -60,7 +60,7 @@ stages:
               scriptLocation: inlineScript
               azureSubscription: RMDev
               inlineScript: |
-                 $out=$(az aks list --query "[?name == 'desattir'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
+                 $out=$(az aks list --query "[?name == 'desattiraks'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
                  if ($out.Length -eq 0) { 
                     Write-Host "Ensure your AKS cluster still exists";
                     exit 1;
