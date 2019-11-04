@@ -54,7 +54,7 @@ stages:
     displayName: Deploy
     pool:
       vmImage: $(vmImageName)
-    environment: 'desattiraks.default'
+    environment: 'dsmsprojectdotnetaks-3130.default'
     strategy:
       runOnce:
         deploy:
@@ -126,7 +126,7 @@ stages:
     pool:
       vmImage: $(vmImageName)
       
-    environment: 'desattiraks.$(k8sNamespaceForPR)'
+    environment: 'dsmsprojectdotnetaks-3130.$(k8sNamespaceForPR)'
     strategy:
       runOnce:
         deploy:
