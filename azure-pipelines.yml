@@ -155,7 +155,7 @@ stages:
               scriptLocation: inlineScript
               azureSubscription: RMDev
               inlineScript: |
-                 $out=$("az aks list --query "[?name == 'desattiraks'][resourceGroup]" | ConvertFrom-Json)
+                 $out=$(az aks list --query "[?name == 'desattiraks'][resourceGroup]" | ConvertFrom-Json)
                  if ($out.Length -eq 0) { 
                     Write-Host "Ensure your AKS cluster still exists";
                     exit 1;
