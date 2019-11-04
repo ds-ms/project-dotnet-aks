@@ -42,8 +42,8 @@ stages:
         tags: |
           $(tag)
           
-          - upload: charts
-        artifact: charts
+    - upload: charts
+      artifact: charts
 
 - stage: Deploy
   displayName: Deploy stage
