@@ -65,6 +65,7 @@ stages:
                     Write-Host "Ensure your AKS cluster still exists";
                     exit 1;
                  }
+                 Write-Host $out
                  if ($out.Length -gt 1) { 
                     Write-Host "There's a conflict, add --resource-group flag to the list command";
                     exit 1;
