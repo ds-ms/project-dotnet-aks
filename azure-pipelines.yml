@@ -11,9 +11,9 @@ resources:
 variables:
 
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '6d10bcbf-fda3-4f5e-aaf4-e2590681216c'
+  dockerRegistryServiceConnection: 'desattir'
   imageRepository: 'dsmsprojectdotnetaks'
-  containerRegistry: 'desattiracr.azurecr.io'
+  containerRegistry: 'desattir.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '2900'
   imagePullSecret: 'desattiracr12104330-auth'
@@ -29,6 +29,15 @@ stages:
   jobs:
   - job:
     steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
       - upload: charts
         artifact: charts
 
