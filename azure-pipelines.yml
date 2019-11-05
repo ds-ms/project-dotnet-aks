@@ -84,7 +84,7 @@ stages:
                  }
                  if ($out[0][0]) {
                     $resourceGroupName=$out[0][0]
-                    az aks use-dev-spaces -n desattiraks -g $resourceGroupName -s $(k8sNamespaceForPR) -y
+                    az aks use-dev-spaces -n desattiraks -g $resourceGroupName -s default -y
                     $hostSuffix=$(azds show-context -o json | ConvertFrom-Json).controller.hostSuffix
                     Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
                  }
