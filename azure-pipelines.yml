@@ -105,8 +105,7 @@ stages:
                 service.port:80
                 ingress.enabled:true
                 ingress.annotations.kuberentes\.io/ingress\.class:addon-http-application-routing
-                ingress.paths[0]:/
-                ingress.hosts[0]:dev.appdeploy.$(HostSuffix)
+                ingress.hostname:dev.appdeploy.$(HostSuffix)
 
           - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
