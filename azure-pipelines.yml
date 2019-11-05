@@ -15,7 +15,7 @@ variables:
   imageRepository: 'dsmsprojectdotnetaks'
   containerRegistry: 'desattir.azurecr.io'
   dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildId)'
+  tag: '2990'
   imagePullSecret: 'desattir1888233d-auth'
 
   # Agent VM image name
@@ -32,15 +32,6 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
           
     - upload: charts
       artifact: charts
