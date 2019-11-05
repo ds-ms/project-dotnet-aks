@@ -64,25 +64,25 @@ stages:
               scriptLocation: inlineScript
               azureSubscription: RMDev
               inlineScript: |
-                 $out=$(az aks list --query "[?name == 'desattiraks'][addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName]" | ConvertFrom-Json)
+                 $out=$(az aks list --query "[?name == 'desattiraks'][resourceGroup]" | ConvertFrom-Json)
                  if ($out.Length -eq 0) { 
                     Write-Host "Ensure your AKS cluster still exists";
                     exit 1;
                  }
-                 Write-Host $out
                  if ($out.Length -gt 1) { 
                     Write-Host "There's a conflict, add --resource-group flag to the list command";
                     exit 1;
                  }
                  if ($out[0][0]) {
-                    $hostSuffix=$out[0][0]
+                    $resourceGroupName=$out[0][0]
+                    az aks use-dev-spaces -n desattiraks -g $resourceGroupName -s default -y
+                    $hostSuffix=$(azds show-context -o json | ConvertFrom-Json).controller.hostSuffix
                     Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
                  }
                  else {
-                    Write-Host "Enable addon http routing";
+                    Write-Host "Enable dev spaces";
                     exit 1;
                  }
-   
 
           - task: KubernetesManifest@0
             displayName: Bake manifests
@@ -95,7 +95,6 @@ stages:
                 image.repository:$(containerRegistry)/$(imageRepository)
                 service.port:80
                 ingress.enabled:true
-                ingress.annotations.kuberentes\.io/ingress\.class:addon-http-application-routing
                 ingress.hostname:dev.appdeploy.$(HostSuffix)
 
           - script: cat $(bake.manifestsBundle)
