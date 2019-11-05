@@ -176,9 +176,7 @@ stages:
                 image.repository:$(containerRegistry)/$(imageRepository)
                 service.port:80
                 ingress.enabled:true
-                ingress.annotations.kuberentes\.io/ingress\.class:traefik-azds
-                ingress.paths[0]:/
-                ingress.hosts[0]:appdeploy.s.$(HostSuffix)
+                ingress.hostname:dev.s.$(HostSuffix)
 
           - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
