@@ -42,13 +42,12 @@ stages:
         tags: |
           $(tag)
           
-    - upload: manifests
-      artifact: manifests
+    - upload: charts
+      artifact: charts
 
 - stage: Deploy
   displayName: Deploy stage
   dependsOn: Build
-
   jobs:
   - deployment: Deploy
     condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/pull/')))
@@ -66,14 +65,56 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              
+          
+          - task: AzureCLI@2
+            displayName: get host suffix
+            inputs:
+              scriptType: pscore
+              scriptLocation: inlineScript
+              azureSubscription: RMDev
+              inlineScript: |
+                 $out=$(az aks list --query "[?name == 'desattiraks'][resourceGroup]" | ConvertFrom-Json)
+                 if ($out.Length -eq 0) { 
+                    Write-Host "Ensure your AKS cluster still exists";
+                    exit 1;
+                 }
+                 if ($out.Length -gt 1) { 
+                    Write-Host "There's a conflict, add --resource-group flag to the list command";
+                    exit 1;
+                 }
+                 if ($out[0][0]) {
+                    $resourceGroupName=$out[0][0]
+                    az aks use-dev-spaces -n desattiraks -g $resourceGroupName -s $(k8sNamespaceForPR) -y
+                    $hostSuffix=$(azds show-context -o json | ConvertFrom-Json).controller.hostSuffix
+                    Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
+                 }
+                 else {
+                    Write-Host "Enable dev spaces";
+                    exit 1;
+                 }
+
+          - task: KubernetesManifest@0
+            displayName: Bake manifests
+            name: bake
+            inputs:
+              action: bake
+              helmChart: $(Pipeline.Workspace)/charts/samplechart
+              overrideFiles: $(Pipeline.Workspace)/charts/samplechart/values.yaml
+              overrides: |
+                image.repository:$(containerRegistry)/$(imageRepository)
+                service.port:80
+                ingress.enabled:true
+                ingress.annotations.kuberentes\.io/ingress\.class:addon-http-application-routing
+                ingress.paths[0]:/
+                ingress.hosts[0]:dev.appdeploy.$(HostSuffix)
+
+          - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
               manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
+                $(bake.manifestsBundle)
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
@@ -106,20 +147,62 @@ stages:
               secretName: $(imagePullSecret)
               namespace: $(k8sNamespaceForPR)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-          
+
+          - task: AzureCLI@2
+            displayName: get host suffix
+            inputs:
+              scriptType: pscore
+              scriptLocation: inlineScript
+              azureSubscription: RMDev
+              inlineScript: |
+                 $out=$(az aks list --query "[?name == 'desattiraks'][resourceGroup]" | ConvertFrom-Json)
+                 if ($out.Length -eq 0) { 
+                    Write-Host "Ensure your AKS cluster still exists";
+                    exit 1;
+                 }
+                 if ($out.Length -gt 1) { 
+                    Write-Host "There's a conflict, add --resource-group flag to the list command";
+                    exit 1;
+                 }
+                 if ($out[0][0]) {
+                    $resourceGroupName=$out[0][0]
+                    az aks use-dev-spaces -n desattiraks -g $resourceGroupName -s $(k8sNamespaceForPR) -y
+                    $hostSuffix=$(azds show-context -o json | ConvertFrom-Json).controller.hostSuffix
+                    Write-Host "##vso[task.setvariable variable=HostSuffix]${hostSuffix}"
+                 }
+                 else {
+                    Write-Host "Enable dev spaces";
+                    exit 1;
+                 }
+
+          - task: KubernetesManifest@0
+            displayName: Bake manifests
+            name: bake
+            inputs:
+              action: bake
+              releaseName: pr
+              helmChart: $(Pipeline.Workspace)/charts/samplechart
+              overrideFiles: $(Pipeline.Workspace)/charts/samplechart/values.yaml
+              overrides: |
+                image.repository:$(containerRegistry)/$(imageRepository)
+                service.port:80
+                ingress.enabled:true
+                ingress.annotations.kuberentes\.io/ingress\.class:traefik-azds
+                ingress.paths[0]:/
+                ingress.hosts[0]:appdeploy.s.$(HostSuffix)
+
+          - script: cat $(bake.manifestsBundle)
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
-              namespace: $(k8sNamespaceForPR)
               manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
+                $(bake.manifestsBundle)
               imagePullSecrets: |
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
-          
+
           - task: Kubernetes@1
             name: get
             displayName: 'kubectl get services'
